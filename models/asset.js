@@ -20,7 +20,7 @@ const assetSchema = new mongoose.Schema(
     // 🆕 Warranty fields
     warrantyExpiryDate: { type: Date, required: true },
     alertRaised: { type: Boolean, default: false },
-    qrCodeUrl: { type: String }
+    
   },
   { timestamps: true }
 );
