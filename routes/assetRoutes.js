@@ -24,8 +24,8 @@ router.post(
         model,
         makeOrOEM,
         warrantyExpiryDate,
-        latitude,
-        longitude
+        "location[latitude]": latitude,
+        "location[longitude]": longitude
       } = req.body;
 
       const asset = new Asset({
@@ -58,8 +58,6 @@ router.post(
     }
   }
 );
-
-
 
 // ✅ GET: Total asset and active asset counts
 router.get('/counts', async (req, res) => {
