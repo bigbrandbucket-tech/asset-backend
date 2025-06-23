@@ -20,7 +20,12 @@ const alertRoutes = require('./routes/alertRoutes');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['https://meplogistix.vercel.app'], // ✅ Replace with your actual frontend domain
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Serve static files (images, PDFs etc.)
