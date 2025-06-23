@@ -11,30 +11,39 @@ router.post(
   upload.fields([
     { name: 'image', maxCount: 1 },
     { name: 'ga', maxCount: 1 },
-    { name: 'tds', maxCount: 1 },
+    { name: 'curve', maxCount: 1 },
+    { name: 'performance', maxCount: 1 },
     { name: 'spares', maxCount: 1 }
   ]),
   async (req, res) => {
     try {
       const {
-        assetName, type, tag, service, location,
-        repPhone, model, makeOrOEM, warrantyExpiryDate
+        assetName,
+        type,
+        tag,
+        model,
+        makeOrOEM,
+        warrantyExpiryDate,
+        latitude,
+        longitude
       } = req.body;
 
       const asset = new Asset({
         assetName,
         type,
         tag,
-        service,
-        location,
-        repPhone,
         model,
         makeOrOEM,
+        warrantyExpiryDate,
+        location: {
+          latitude,
+          longitude
+        },
         imageUrl: req.files?.image?.[0]?.path || null,
-        gaDocumentUrl: req.files?.ga?.[0]?.path || null,
-        tdsDocumentUrl: req.files?.tds?.[0]?.path || null,
-        sparesManualsUrl: req.files?.spares?.[0]?.path || null,
-        warrantyExpiryDate
+        gaDocumentUrl: req.files?.ga?.[0]?.path,
+        curveDocumentUrl: req.files?.curve?.[0]?.path,
+        performanceDocumentUrl: req.files?.performance?.[0]?.path,
+        sparesManualsUrl: req.files?.spares?.[0]?.path
       });
 
       await asset.save();
@@ -49,6 +58,8 @@ router.post(
     }
   }
 );
+
+
 
 // ✅ GET: Total asset and active asset counts
 router.get('/counts', async (req, res) => {

@@ -2,25 +2,26 @@ const mongoose = require('mongoose');
 
 const assetSchema = new mongoose.Schema(
   {
-    assetName: { type: String, required: true },
-    type: { type: String },
-    tag: { type: String },
-    service: { type: String },
+    type: { type: String, required: true },                     // Electrical, HVAC, etc.
+    makeOrOEM: { type: String, required: true },                // Manufacturer
+    assetName: { type: String, required: true },                // Equipment Name
+    model: { type: String, required: true },                    // Model
+    tag: { type: String, required: true, unique: true },        // Equipment Number
 
-    location: { type: String },
-    repPhone: { type: String, match: /^\d{10}$/ },
-    model: { type: String },
-    makeOrOEM: { type: String },
+    warrantyExpiryDate: { type: Date, required: true },         // Warranty
+    alertRaised: { type: Boolean, default: false },             // Alert tracking
 
-    imageUrl: { type: String },
-    gaDocumentUrl: { type: String },
-    tdsDocumentUrl: { type: String },
-    sparesManualsUrl: { type: String },
+    gaDocumentUrl: { type: String, required: true },            // GA Drawing
+    curveDocumentUrl: { type: String, required: true },         // Curve
+    performanceDocumentUrl: { type: String, required: true },   // Performance
+    sparesManualsUrl: { type: String, required: true },         // Spares & Manuals
 
-    // 🆕 Warranty fields
-    warrantyExpiryDate: { type: Date, required: true },
-    alertRaised: { type: Boolean, default: false },
-    
+    imageUrl: { type: String },                                 // ✅ Optional
+
+    location: {
+      latitude: { type: String, required: true },
+      longitude: { type: String, required: true }
+    }
   },
   { timestamps: true }
 );
