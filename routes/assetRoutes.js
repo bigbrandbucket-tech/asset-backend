@@ -134,7 +134,7 @@ router.get('/:id', async (req, res) => {
 
     console.log("🔍 Fetching asset with ID:", assetId);
 
-    const asset = await Asset.findById(assetId).populate('associatedProject');
+    const asset = await Asset.findById(assetId);
 
     if (!asset) {
       console.warn("❌ Asset not found:", assetId);
