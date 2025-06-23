@@ -19,8 +19,14 @@ const assetSchema = new mongoose.Schema(
     imageUrl: { type: String },                                 // ✅ Optional
 
     location: {
-      latitude: { type: String, required: true },
-      longitude: { type: String, required: true }
+      latitude: {
+        type: String,
+        required: [true, 'Latitude is required']
+      },
+      longitude: {
+        type: String,
+        required: [true, 'Longitude is required']
+      }
     }
   },
   { timestamps: true }

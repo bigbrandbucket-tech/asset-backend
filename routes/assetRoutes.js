@@ -24,8 +24,8 @@ router.post(
         model,
         makeOrOEM,
         warrantyExpiryDate,
-        "location[latitude]": latitude,
-        "location[longitude]": longitude
+        latitude,
+        longitude
       } = req.body;
 
       const asset = new Asset({
@@ -135,7 +135,6 @@ router.get('/:id', async (req, res) => {
   try {
     const assetId = req.params.id;
 
-    // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(assetId)) {
       console.warn("⚠️ Invalid asset ID format:", assetId);
       return res.status(400).json({ error: 'Invalid asset ID' });
