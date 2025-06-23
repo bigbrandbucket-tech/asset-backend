@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const Asset = require('../models/asset');
 const upload = require('../middleware/multerSetup');
+const QRCode = require('qrcode'); // ✅ Added for QR Code generation
 
+// ✅ POST: Upload Asset + Generate QR Code
 router.post(
   '/upload',
   upload.fields([
@@ -15,11 +17,8 @@ router.post(
     try {
       const {
         assetName, type, tag, service, location,
-        repPhone, model, makeOrOEM,warrantyExpiryDate
+        repPhone, model, makeOrOEM, warrantyExpiryDate
       } = req.body;
-
-
-
 
       const asset = new Asset({
         assetName,
@@ -38,24 +37,27 @@ router.post(
       });
 
       await asset.save();
+
+      // ✅ Generate QR Code with frontend link
+      const assetUrl = `https://your-frontend.vercel.app/asset/${asset._id}`;
+      const qrCodeDataURL = await QRCode.toDataURL(assetUrl);
+
+      asset.qrCodeUrl = qrCodeDataURL;
+      await asset.save();
+
       res.status(201).json({ message: 'Asset uploaded successfully', asset });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Asset upload failed' });
     }
   }
-
-
 );
 
-// GET: Total asset count (used in PieChart)
+// ✅ GET: Total asset count
 router.get('/counts', async (req, res) => {
   try {
     const totalAssets = await Asset.countDocuments();
-
     const today = new Date();
-
-    // Active = warranty not yet expired
     const activeAssets = await Asset.countDocuments({
       warrantyExpiryDate: { $gte: today }
     });
@@ -66,7 +68,8 @@ router.get('/counts', async (req, res) => {
     res.status(500).json({ error: "Failed to fetch asset counts" });
   }
 });
-// GET: Count of assets grouped by type (used in BarChart)
+
+// ✅ GET: Count of assets grouped by type
 router.get('/type-count', async (req, res) => {
   try {
     const result = await Asset.aggregate([
@@ -91,8 +94,6 @@ router.get('/type-count', async (req, res) => {
   }
 });
 
-
-
 // ✅ GET: All assets
 router.get('/', async (req, res) => {
   try {
@@ -103,23 +104,20 @@ router.get('/', async (req, res) => {
   }
 });
 
+// ✅ GET: Active assets
 router.get('/active', async (req, res) => {
   try {
     const today = new Date();
-    console.log("📅 Today is:", today);
-
     const activeAssets = await Asset.find({
       warrantyExpiryDate: { $gte: today }
     });
 
-    console.log("✅ Active assets found:", activeAssets.length);
     res.json(activeAssets);
   } catch (error) {
     console.error("❌ Error fetching active assets:", error);
     res.status(500).json({ error: 'Failed to fetch active assets' });
   }
 });
-
 
 // ✅ GET: Single asset by ID
 router.get('/:id', async (req, res) => {
@@ -131,7 +129,5 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch asset' });
   }
 });
-
-
 
 module.exports = router;
