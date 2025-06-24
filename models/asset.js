@@ -2,21 +2,21 @@ const mongoose = require('mongoose');
 
 const assetSchema = new mongoose.Schema(
   {
-    type: { type: String, required: true },                     // Electrical, HVAC, etc.
-    makeOrOEM: { type: String, required: true },                // Manufacturer
-    assetName: { type: String, required: true },                // Equipment Name
-    model: { type: String, required: true },                    // Model
-    tag: { type: String, required: true, unique: true },        // Equipment Number
+    type: { type: String, required: true },                     
+    makeOrOEM: { type: String, required: true },                
+    assetName: { type: String, required: true },                
+    model: { type: String, required: true },                    
+    tag: { type: String, required: true, unique: true },        
 
-    warrantyExpiryDate: { type: Date, required: true },         // Warranty
-    alertRaised: { type: Boolean, default: false },             // Alert tracking
+    warrantyExpiryDate: { type: Date, required: true },         
+    alertRaised: { type: Boolean, default: false },             
 
-    gaDocumentUrl: { type: String, required: true },            // GA Drawing
-    curveDocumentUrl: { type: String, required: true },         // Curve
-    performanceDocumentUrl: { type: String, required: true },   // Performance
-    sparesManualsUrl: { type: String, required: true },         // Spares & Manuals
+    gaDocumentUrl: { type: String, required: true },            
+    curveDocumentUrl: { type: String, required: true },         
+    performanceDocumentUrl: { type: String, required: true },   
+    sparesManualsUrl: { type: String, required: true },         
 
-    imageUrl: { type: String },                                 // ✅ Optional
+    imageUrl: { type: String },                                 
 
     location: {
       latitude: {
@@ -27,7 +27,15 @@ const assetSchema = new mongoose.Schema(
         type: String,
         required: [true, 'Longitude is required']
       }
+    },
+
+    // ✅ New: Link to the associated project
+    associatedProject: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Project',
+      required: true
     }
+
   },
   { timestamps: true }
 );

@@ -25,7 +25,8 @@ router.post(
         makeOrOEM,
         warrantyExpiryDate,
         latitude,
-        longitude
+        longitude,
+        associatedProject // ✅ get from body
       } = req.body;
 
       const asset = new Asset({
@@ -35,6 +36,7 @@ router.post(
         model,
         makeOrOEM,
         warrantyExpiryDate,
+        associatedProject, // ✅ store reference to Project
         location: {
           latitude,
           longitude
@@ -47,6 +49,15 @@ router.post(
       });
 
       await asset.save();
+
+      // ✅ Push asset into project's assets array
+      if (associatedProject) {
+        await Project.findByIdAndUpdate(
+          associatedProject,
+          { $push: { assets: asset._id } },
+          { new: true }
+        );
+      }
 
       const qrCode = await generateQrCode(asset._id);
 

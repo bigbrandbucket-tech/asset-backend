@@ -1,18 +1,32 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
+const Project = require('../models/project'); // ✅ Added
 
 // ✅ Create a new user
 router.post('/', async (req, res) => {
   try {
+    const { assignedProject } = req.body;
+
+    // Create the user
     const user = await User.create(req.body);
+
+    // If user is assigned to a project, add user to that project's user list
+    if (assignedProject) {
+      await Project.findByIdAndUpdate(
+        assignedProject,
+        { $push: { users: user._id } },
+        { new: true }
+      );
+    }
+
     res.status(201).json(user);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-// ✅ Get all users
+// ✅ Get all users with project and client populated
 router.get('/', async (req, res) => {
   try {
     const users = await User.find().populate({
