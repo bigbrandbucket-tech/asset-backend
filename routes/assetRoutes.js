@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Asset = require('../models/asset');
+const Project = require('../models/project'); // ✅ FIX: Add this import
 const upload = require('../middleware/multerSetup');
 const generateQrCode = require('../utils/generateQRCode');
 
@@ -26,7 +27,7 @@ router.post(
         warrantyExpiryDate,
         latitude,
         longitude,
-        associatedProject // ✅ get from body
+        associatedProject
       } = req.body;
 
       const asset = new Asset({
@@ -36,21 +37,21 @@ router.post(
         model,
         makeOrOEM,
         warrantyExpiryDate,
-        associatedProject, // ✅ store reference to Project
+        associatedProject,
         location: {
           latitude,
           longitude
         },
         imageUrl: req.files?.image?.[0]?.path || null,
-        gaDocumentUrl: req.files?.ga?.[0]?.path,
-        curveDocumentUrl: req.files?.curve?.[0]?.path,
-        performanceDocumentUrl: req.files?.performance?.[0]?.path,
-        sparesManualsUrl: req.files?.spares?.[0]?.path
+        gaDocumentUrl: req.files?.ga?.[0]?.path || null,
+        curveDocumentUrl: req.files?.curve?.[0]?.path || null,
+        performanceDocumentUrl: req.files?.performance?.[0]?.path || null,
+        sparesManualsUrl: req.files?.spares?.[0]?.path || null
       });
 
       await asset.save();
 
-      // ✅ Push asset into project's assets array
+      // ✅ Link asset to project
       if (associatedProject) {
         await Project.findByIdAndUpdate(
           associatedProject,
@@ -61,10 +62,13 @@ router.post(
 
       const qrCode = await generateQrCode(asset._id);
 
-      res.status(201).json({ message: 'Asset uploaded successfully', asset, qrCode });
-
+      res.status(201).json({
+        message: 'Asset uploaded successfully',
+        asset,
+        qrCode
+      });
     } catch (err) {
-      console.error("🔥 Error uploading asset:", err);
+      console.error('🔥 Error uploading asset:', err);
       res.status(500).json({ error: 'Asset upload failed' });
     }
   }
@@ -82,8 +86,8 @@ router.get('/counts', async (req, res) => {
 
     res.json({ totalAssets, activeAssets });
   } catch (error) {
-    console.error("❌ Error fetching asset counts:", error);
-    res.status(500).json({ error: "Failed to fetch asset counts" });
+    console.error('❌ Error fetching asset counts:', error);
+    res.status(500).json({ error: 'Failed to fetch asset counts' });
   }
 });
 
@@ -93,22 +97,22 @@ router.get('/type-count', async (req, res) => {
     const result = await Asset.aggregate([
       {
         $group: {
-          _id: "$type",
+          _id: '$type',
           count: { $sum: 1 }
         }
       },
       {
         $project: {
           _id: 0,
-          type: "$_id",
+          type: '$_id',
           count: 1
         }
       }
     ]);
     res.json(result);
   } catch (error) {
-    console.error("❌ Error fetching asset type counts:", error);
-    res.status(500).json({ error: "Failed to fetch asset type counts" });
+    console.error('❌ Error fetching asset type counts:', error);
+    res.status(500).json({ error: 'Failed to fetch asset type counts' });
   }
 });
 
@@ -118,7 +122,7 @@ router.get('/', async (req, res) => {
     const assets = await Asset.find();
     res.json(assets);
   } catch (err) {
-    console.error("❌ Error fetching all assets:", err);
+    console.error('❌ Error fetching all assets:', err);
     res.status(500).json({ error: 'Failed to fetch assets' });
   }
 });
@@ -127,42 +131,35 @@ router.get('/', async (req, res) => {
 router.get('/active', async (req, res) => {
   try {
     const today = new Date();
-    console.log("📅 Today is:", today);
-
     const activeAssets = await Asset.find({
       warrantyExpiryDate: { $gte: today }
     });
-
-    console.log("✅ Active assets found:", activeAssets.length);
     res.json(activeAssets);
   } catch (error) {
-    console.error("❌ Error fetching active assets:", error);
+    console.error('❌ Error fetching active assets:', error);
     res.status(500).json({ error: 'Failed to fetch active assets' });
   }
 });
 
-// ✅ GET: Single asset by ID with validation and logging
+// ✅ GET: Single asset by ID with validation
 router.get('/:id', async (req, res) => {
   try {
     const assetId = req.params.id;
 
     if (!mongoose.Types.ObjectId.isValid(assetId)) {
-      console.warn("⚠️ Invalid asset ID format:", assetId);
+      console.warn('⚠️ Invalid asset ID format:', assetId);
       return res.status(400).json({ error: 'Invalid asset ID' });
     }
-
-    console.log("🔍 Fetching asset with ID:", assetId);
 
     const asset = await Asset.findById(assetId);
 
     if (!asset) {
-      console.warn("❌ Asset not found:", assetId);
       return res.status(404).json({ error: 'Asset not found' });
     }
 
     res.json(asset);
   } catch (err) {
-    console.error("🔥 Error in GET /api/assets/:id:", err);
+    console.error('🔥 Error in GET /api/assets/:id:', err);
     res.status(500).json({ error: 'Failed to fetch asset' });
   }
 });
