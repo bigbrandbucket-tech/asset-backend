@@ -14,10 +14,11 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['https://meplogistix.vercel.app'],
+  origin: ['https://asset-frontend-navy.vercel.app'], // ✅ This must match your frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
+
 
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
