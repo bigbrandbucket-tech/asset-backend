@@ -2,60 +2,89 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cron = require('node-cron');
+const dotenv = require('dotenv');
 const Alert = require('./models/alert');
 const Asset = require('./models/asset');
+const User = require('./models/user');
+const Client = require('./models/client');
 
-require('dotenv').config();
-
-// Routes
-const clientRoutes = require('./routes/clientRoutes');
-const projectRoutes = require('./routes/projectRoutes');
-const userRoutes = require('./routes/userRoutes');
-const assetRoutes = require('./routes/assetRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes');
-const alertRoutes = require('./routes/alertRoutes');
-
-
+dotenv.config();
 
 const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['https://meplogistix.vercel.app'], // ✅ Replace with your actual frontend domain
+  origin: ['https://meplogistix.vercel.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
 
 app.use(express.json());
-
-// Serve static files (images, PDFs etc.)
 app.use('/uploads', express.static('uploads'));
 
 // API Routes
-app.use('/api/clients', clientRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/assets', assetRoutes);
-app.use('/api/dashboard', dashboardRoutes); // ✅ Register new dashboard route
-app.use('/api/alerts', alertRoutes);
-// DB Connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch((err) => console.error('❌ MongoDB connection failed:', err));
+app.use('/api/clients', require('./routes/clientRoutes'));
+app.use('/api/projects', require('./routes/projectRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/assets', require('./routes/assetRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/alerts', require('./routes/alertRoutes'));
 
-// Start Server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
 app.get('/', (req, res) => {
   res.send('✅ Backend is running!');
 });
 
+// 🔐 SEED DEFAULT ADMIN & CLIENT
+const seedInitialAccounts = async () => {
+  try {
+    const existingAdmin = await User.findOne({ username: 'admin' });
+    if (!existingAdmin) {
+      await User.create({
+        username: 'admin',
+        password: 'admin123',
+        role: 'Admin',
+        email: 'admin@example.com',
+        phone: '9999999999'
+      });
+      console.log('✅ Default admin user created: admin / admin123');
+    }
+
+    const existingClient = await Client.findOne({ username: 'client' });
+    if (!existingClient) {
+      await Client.create({
+        clientName: 'Test Client',
+        username: 'client',
+        password: 'client123',
+        pocName: 'John Doe',
+        pocNumber: '8888888888',
+        email: 'client@example.com',
+        address: '123 Client St'
+      });
+      console.log('✅ Default client created: client / client123');
+    }
+  } catch (err) {
+    console.error('❌ Error seeding initial users:', err.message);
+  }
+};
+
+// DB Connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log('✅ MongoDB connected');
+    seedInitialAccounts(); // 🔑 Seed test login
+  })
+  .catch((err) => console.error('❌ MongoDB connection failed:', err));
+
+// Server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
+
+// ⏰ Cron job
 cron.schedule('1 0 * * *', async () => {
   try {
     console.log('🛠️ Running daily expiry alert check...');
-
     const assets = await Asset.find();
     const now = new Date();
 

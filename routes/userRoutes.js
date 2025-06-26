@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
-const Project = require('../models/project'); // ✅ Added
+const Project = require('../models/project'); 
+const bcrypt = require('bcrypt');// ✅ Added
 
 // ✅ Create a new user
 router.post('/', async (req, res) => {
@@ -75,6 +76,37 @@ router.get('/by-client/:clientName', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch users by client name' });
+  }
+});
+router.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    // Find the user by username
+    const user = await User.findOne({ username });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+
+    // Compare passwords using bcrypt
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+
+    // Successful login
+    res.json({
+      message: 'Login successful',
+      user: {
+        id: user._id,
+        username: user.username,
+        role: user.role,
+        assignedProject: user.assignedProject
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Login failed' });
   }
 });
 

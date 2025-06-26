@@ -9,7 +9,11 @@ const clientSchema = new mongoose.Schema({
     match: /^\d{10}$/
   },
   email: { type: String, required: true },
-  address: { type: String }
+  address: { type: String },
+  
+  // ✅ Add these fields for login
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true } // Will be hashed with bcrypt
 });
 
 module.exports = mongoose.model('Client', clientSchema);
