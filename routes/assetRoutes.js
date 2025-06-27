@@ -2,11 +2,10 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Asset = require('../models/asset');
-const Project = require('../models/project'); // ✅ FIX: Add this import
+const Project = require('../models/project');
 const upload = require('../middleware/multerSetup');
 const generateQrCode = require('../utils/generateQRCode');
 
-// ✅ POST: Upload a new asset
 router.post(
   '/upload',
   upload.fields([
@@ -38,10 +37,7 @@ router.post(
         makeOrOEM,
         warrantyExpiryDate,
         associatedProject,
-        location: {
-          latitude,
-          longitude
-        },
+        location: { latitude, longitude },
         imageUrl: req.files?.image?.[0]?.path || null,
         gaDocumentUrl: req.files?.ga?.[0]?.path || null,
         curveDocumentUrl: req.files?.curve?.[0]?.path || null,
@@ -51,7 +47,7 @@ router.post(
 
       await asset.save();
 
-      // ✅ Link asset to project
+      // ✅ Save reference in project
       if (associatedProject) {
         await Project.findByIdAndUpdate(
           associatedProject,
@@ -60,12 +56,15 @@ router.post(
         );
       }
 
-      const qrCode = await generateQrCode(asset._id);
+      // ✅ Generate and save QR code
+      const qrCodeUrl = await generateQrCode(asset._id);
+      asset.qrCodeUrl = qrCodeUrl;
+      await asset.save();
 
       res.status(201).json({
         message: 'Asset uploaded successfully',
         asset,
-        qrCode
+        qrCode: qrCodeUrl
       });
     } catch (err) {
       console.error('🔥 Error uploading asset:', err);
@@ -73,6 +72,9 @@ router.post(
     }
   }
 );
+
+
+
 
 // ✅ GET: Total asset and active asset counts
 router.get('/counts', async (req, res) => {
