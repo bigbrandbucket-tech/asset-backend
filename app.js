@@ -14,7 +14,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['https://asset-frontend-navy.vercel.app','http://localhost:5173'], // ✅ This must match your frontend
+  origin: ['https://asset-frontend-navy.vercel.app','http://localhost:5173','https://asset-frontend-sooty.vercel.app'], // ✅ This must match your frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
