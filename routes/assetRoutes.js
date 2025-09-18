@@ -26,6 +26,7 @@ router.post(
         warrantyExpiryDate,
         latitude,
         longitude,
+        totalPower,
         associatedProject
       } = req.body;
 
@@ -36,6 +37,7 @@ router.post(
         model,
         makeOrOEM,
         warrantyExpiryDate,
+        totalPower,
         associatedProject,
         location: { latitude, longitude },
         imageUrl: req.files?.image?.[0]?.path || null,
@@ -76,6 +78,45 @@ router.post(
 
 
 
+// ✅ GET: Total asset and active asset counts
+// ...existing code...
+router.get('/kwh-counts', async (req, res) => {
+  const { clientId } = req.query;
+  try {
+    let projectIds = [];
+    if (clientId) {
+      // Find projects for this client
+      const projects = await Project.find({ client: clientId }, '_id');
+      projectIds = projects.map(p => p._id);
+    }
+
+    // Build asset filter
+    const assetFilter = clientId ? { associatedProject: { $in: projectIds } } : {};
+
+    // Total assets count
+    const totalAssets = await Asset.countDocuments(assetFilter);
+
+    // Active assets count
+    const today = new Date();
+    const activeAssets = await Asset.countDocuments({
+      ...assetFilter,
+      warrantyExpiryDate: { $gte: today }
+    });
+console.log(totalAssets, activeAssets);
+    // Total power sum
+    const totalPowerAgg = await Asset.aggregate([
+      { $match: assetFilter },
+      { $group: { _id: null, totalPower: { $sum: "$totalPower" } } }
+    ]);
+    const totalPower = totalPowerAgg[0]?.totalPower || 0;
+
+    res.json({ totalAssets, activeAssets, totalPower });
+  } catch (error) {
+    console.error('❌ Error fetching asset counts:', error);
+    res.status(500).json({ error: 'Failed to fetch asset counts' });
+  }
+});
+// ...existing code...
 // ✅ GET: Total asset and active asset counts
 router.get('/counts', async (req, res) => {
   try {

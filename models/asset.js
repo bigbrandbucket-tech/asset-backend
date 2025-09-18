@@ -9,6 +9,7 @@ const assetSchema = new mongoose.Schema(
     tag: { type: String, required: true, unique: true },
     warrantyExpiryDate: { type: Date, required: true },
     alertRaised: { type: Boolean, default: false },
+    totalPower: { type: Number, required: true },
 
     gaDocumentUrl: { type: String, required: true },
     curveDocumentUrl: { type: String, required: true },
